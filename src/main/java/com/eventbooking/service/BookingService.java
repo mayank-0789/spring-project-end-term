@@ -36,6 +36,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final TicketRepository ticketRepository;
     private final QRCodeGenerator qrCodeGenerator;
+    private final EmailService emailService;
 
     private static final int BOOKING_EXPIRY_MINUTES = 10;
 
@@ -127,6 +128,10 @@ public class BookingService {
         booking.setTickets(tickets);
 
         booking = bookingRepository.save(booking);
+
+        // Send confirmation email
+        emailService.sendBookingConfirmation(booking, tickets);
+
         return mapToResponse(booking);
     }
 
@@ -154,6 +159,10 @@ public class BookingService {
         booking.getTickets().forEach(ticket -> ticket.setStatus(TicketStatus.CANCELLED));
 
         booking = bookingRepository.save(booking);
+
+        // Send cancellation email
+        emailService.sendBookingCancellation(booking);
+
         return mapToResponse(booking);
     }
 

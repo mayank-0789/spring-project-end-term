@@ -60,9 +60,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/events/**").hasAnyRole("ORGANIZER", "ADMIN")
                         .requestMatchers("/api/analytics/**").hasAnyRole("ORGANIZER", "ADMIN")
 
-                        // Admin endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/venues/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/venues/**").hasRole("ADMIN")
+                        // Venue management
+                        .requestMatchers(HttpMethod.POST, "/api/venues/**").hasAnyRole("ORGANIZER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/venues/**").hasAnyRole("ORGANIZER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/venues/**").hasRole("ADMIN")
 
                         // All other endpoints require authentication

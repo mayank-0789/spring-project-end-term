@@ -40,15 +40,15 @@ razorpay:
     secret: ${RAZORPAY_KEY_SECRET:}
 
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
-  api-key: ${CLOUDINARY_API_KEY:}
-  api-secret: ${CLOUDINARY_API_SECRET:}
+  cloud-name: dhqc8pbox
+  api-key: "262349562834564"
+  api-secret: GYCasQpWvEyzvGNmFg_hir98PFs
 
-sendgrid:
-  api-key: ${SENDGRID_API_KEY:}
+postmark:
+  server-token: 89917b98-35d1-4525-a090-7133109f44a7
 
 email:
-  from: ${EMAIL_FROM:noreply@eventbooking.com}
+  from: noreply@jeeorbit.com
 
 management:
   endpoints:

@@ -19,8 +19,8 @@ import java.util.List;
 @Slf4j
 public class EmailService {
 
-    @Value("${sendgrid.api-key:}")
-    private String sendgridApiKey;
+    @Value("${postmark.server-token:}")
+    private String postmarkToken;
 
     @Value("${email.from:noreply@eventbooking.com}")
     private String fromEmail;
@@ -29,8 +29,8 @@ public class EmailService {
 
     @Async
     public void sendBookingConfirmation(Booking booking, List<Ticket> tickets) {
-        if (sendgridApiKey.isEmpty()) {
-            log.warn("SendGrid API key not configured, skipping email");
+        if (postmarkToken.isEmpty()) {
+            log.warn("Postmark token not configured, skipping email");
             return;
         }
 
@@ -43,15 +43,15 @@ public class EmailService {
 
     @Async
     public void sendBookingCancellation(Booking booking) {
-        if (sendgridApiKey.isEmpty()) {
-            log.warn("SendGrid API key not configured, skipping email");
+        if (postmarkToken.isEmpty()) {
+            log.warn("Postmark token not configured, skipping email");
             return;
         }
 
         String toEmail = booking.getUser().getEmail();
         String subject = "Booking Cancelled - " + booking.getEvent().getTitle();
         String content = String.format(
-                "Your booking %s for %s has been cancelled. Amount: ₹%s",
+                "<h2>Booking Cancelled</h2><p>Your booking %s for %s has been cancelled.</p><p>Amount: ₹%s</p>",
                 booking.getBookingReference(),
                 booking.getEvent().getTitle(),
                 booking.getTotalAmount());
@@ -59,27 +59,30 @@ public class EmailService {
         sendEmail(toEmail, subject, content);
     }
 
-    private void sendEmail(String to, String subject, String content) {
+    private void sendEmail(String to, String subject, String htmlBody) {
         try {
             String json = String.format("""
                     {
-                        "personalizations": [{"to": [{"email": "%s"}]}],
-                        "from": {"email": "%s"},
-                        "subject": "%s",
-                        "content": [{"type": "text/html", "value": "%s"}]
+                        "From": "%s",
+                        "To": "%s",
+                        "Subject": "%s",
+                        "HtmlBody": "%s",
+                        "MessageStream": "outbound"
                     }
-                    """, to, fromEmail, subject, content.replace("\"", "\\\"").replace("\n", "<br>"));
+                    """, fromEmail, to, subject,
+                    htmlBody.replace("\"", "\\\"").replace("\n", ""));
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.sendgrid.com/v3/mail/send"))
-                    .header("Authorization", "Bearer " + sendgridApiKey)
+                    .uri(URI.create("https://api.postmarkapp.com/email"))
+                    .header("Accept", "application/json")
                     .header("Content-Type", "application/json")
+                    .header("X-Postmark-Server-Token", postmarkToken)
                     .POST(HttpRequest.BodyPublishers.ofString(json))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            if (response.statusCode() == 200) {
                 log.info("Email sent to {}", to);
             } else {
                 log.error("Failed to send email: {}", response.body());

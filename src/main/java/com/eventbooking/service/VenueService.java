@@ -8,7 +8,7 @@ import com.eventbooking.model.Venue;
 import com.eventbooking.repository.VenueRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,20 +32,19 @@ public class VenueService {
                 .address(request.getAddress())
                 .city(request.getCity())
                 .capacity(request.getCapacity())
+                .description(request.getDescription())
                 .build();
 
         venue = venueRepository.save(venue);
         return mapToResponse(venue);
     }
 
-    @Cacheable(value = "venue", key = "#id")
     public VenueResponse getVenueById(Long id) {
         Venue venue = venueRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Venue", id));
         return mapToResponse(venue);
     }
 
-    @Cacheable(value = "venues", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<VenueResponse> getAllVenues(Pageable pageable) {
         return venueRepository.findAll(pageable)
                 .map(this::mapToResponse);
@@ -87,6 +86,7 @@ public class VenueService {
                 .address(venue.getAddress())
                 .city(venue.getCity())
                 .capacity(venue.getCapacity())
+                .description(venue.getDescription())
                 .createdAt(venue.getCreatedAt())
                 .build();
     }

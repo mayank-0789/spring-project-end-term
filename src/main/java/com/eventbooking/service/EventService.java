@@ -19,7 +19,6 @@ import com.eventbooking.repository.UserRepository;
 import com.eventbooking.repository.VenueRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -74,14 +73,12 @@ public class EventService {
         return mapToResponse(event);
     }
 
-    @Cacheable(value = "event", key = "#id")
     public EventResponse getEventById(Long id) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", id));
         return mapToResponse(event);
     }
 
-    @Cacheable(value = "events", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<EventResponse> getAllPublishedEvents(Pageable pageable) {
         return eventRepository.findUpcomingEvents(EventStatus.PUBLISHED, LocalDateTime.now(), pageable)
                 .map(this::mapToResponse);
@@ -94,7 +91,6 @@ public class EventService {
                 .map(this::mapToResponse);
     }
 
-    @Cacheable(value = "popularEvents")
     public Page<EventResponse> getPopularEvents(Pageable pageable) {
         return eventRepository.findPopularEvents(pageable)
                 .map(this::mapToResponse);

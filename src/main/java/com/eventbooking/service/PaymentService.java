@@ -1,6 +1,7 @@
 package com.eventbooking.service;
 
 import com.eventbooking.dto.request.PaymentVerificationRequest;
+import com.eventbooking.dto.request.PaymentWebhookEvent;
 import com.eventbooking.dto.response.BookingResponse;
 import com.eventbooking.dto.response.PaymentOrderResponse;
 import com.eventbooking.exception.*;
@@ -142,5 +143,38 @@ public class PaymentService {
         Booking booking = bookingRepository.findByBookingReference(bookingReference)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
         return booking.getPayment();
+    }
+
+    @Transactional
+    public void handleWebhook(PaymentWebhookEvent event) {
+        log.info("Processing webhook for order: {}, status: {}", event.getRazorpayOrderId(), event.getStatus());
+
+        Payment payment = paymentRepository.findByRazorpayOrderId(event.getRazorpayOrderId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Payment not found for order: " + event.getRazorpayOrderId()));
+
+        // Avoid processing already completed payments
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            log.info("Payment already processed successfully, skipping");
+            return;
+        }
+
+        if ("SUCCESS".equals(event.getStatus())) {
+            payment.setRazorpayPaymentId(event.getRazorpayPaymentId());
+            payment.setStatus(PaymentStatus.SUCCESS);
+            payment.setPaymentDate(LocalDateTime.now());
+            paymentRepository.save(payment);
+
+            // Confirm booking and generate tickets
+            Booking booking = payment.getBooking();
+            if (booking.getStatus() == BookingStatus.PENDING) {
+                bookingService.confirmBooking(booking.getId());
+                log.info("Booking {} confirmed via webhook", booking.getBookingReference());
+            }
+        } else if ("FAILED".equals(event.getStatus())) {
+            payment.setStatus(PaymentStatus.FAILED);
+            paymentRepository.save(payment);
+            log.info("Payment marked as failed for order: {}", event.getRazorpayOrderId());
+        }
     }
 }

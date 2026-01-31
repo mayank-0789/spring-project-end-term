@@ -51,6 +51,8 @@ razorpay:
   key:
     id: ${RAZORPAY_KEY_ID:}
     secret: ${RAZORPAY_KEY_SECRET:}
+  webhook:
+    secret: ${RAZORPAY_WEBHOOK_SECRET:}
 
 cloudinary:
   cloud-name: dhqc8pbox

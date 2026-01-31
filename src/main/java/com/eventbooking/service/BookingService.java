@@ -129,8 +129,21 @@ public class BookingService {
 
         booking = bookingRepository.save(booking);
 
-        // Send confirmation email
-        emailService.sendBookingConfirmation(booking, tickets);
+        // Extract values before transaction ends (to avoid lazy loading in async)
+        String toEmail = booking.getUser().getEmail();
+        String bookingRef = booking.getBookingReference();
+        String eventTitle = booking.getEvent().getTitle();
+        String eventDate = booking.getEvent().getStartDate().toString();
+        String venueName = booking.getEvent().getVenue().getName();
+        Integer quantity = booking.getQuantity();
+        String totalAmount = booking.getTotalAmount().toString();
+        String ticketNumbers = tickets.stream()
+                .map(Ticket::getTicketNumber)
+                .collect(Collectors.joining(", "));
+
+        // Send confirmation email using direct method (avoids entity access in async)
+        emailService.sendBookingConfirmationDirect(toEmail, bookingRef, eventTitle,
+                eventDate, venueName, quantity, totalAmount, ticketNumbers);
 
         return mapToResponse(booking);
     }

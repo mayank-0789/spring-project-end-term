@@ -13,8 +13,8 @@ services:
       - SPRING_DATA_REDIS_HOST=redis
       - KAFKA_SERVERS=kafka:9092
       - JWT_SECRET=${JWT_SECRET:-aVeryLongSecretKeyThatIsAtLeast256BitsForHS256Algorithm}
-      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
-      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - RAZORPAY_KEY_ID=rzp_test_S5hshZad7Mgvlt
+      - RAZORPAY_KEY_SECRET=KLgfivAU4fcbR2EMi2A0v2EQ
     depends_on:
       postgres:
         condition: service_healthy

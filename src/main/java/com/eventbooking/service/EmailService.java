@@ -59,6 +59,30 @@ public class EmailService {
         sendEmail(toEmail, subject, content);
     }
 
+    @Async
+    public void sendWelcomeEmail(String email, String name) {
+        if (postmarkToken.isEmpty()) {
+            log.warn("Postmark token not configured, skipping welcome email");
+            return;
+        }
+
+        String subject = "Welcome to Event Booking Platform!";
+        String content = String.format("""
+                <h2>Welcome, %s!</h2>
+                <p>Thank you for registering with our Event Booking Platform.</p>
+                <p>You can now:</p>
+                <ul>
+                    <li>Browse upcoming events</li>
+                    <li>Book tickets for your favorite events</li>
+                    <li>Manage your bookings</li>
+                </ul>
+                <p>Start exploring events now!</p>
+                <p>Best regards,<br>Event Booking Team</p>
+                """, name);
+
+        sendEmail(email, subject, content);
+    }
+
     private void sendEmail(String to, String subject, String htmlBody) {
         try {
             String json = String.format("""
@@ -107,5 +131,69 @@ public class EmailService {
             sb.append("<p>Ticket #").append(ticket.getTicketNumber()).append("</p>");
         }
         return sb.toString();
+    }
+
+    // Direct methods for Kafka consumers (no @Async - Kafka handles async)
+    public void sendWelcomeEmailDirect(String email, String name) {
+        if (postmarkToken.isEmpty()) {
+            log.warn("Postmark token not configured, skipping welcome email");
+            return;
+        }
+
+        String subject = "Welcome to Event Booking Platform!";
+        String content = String.format("""
+                <h2>Welcome, %s!</h2>
+                <p>Thank you for registering with our Event Booking Platform.</p>
+                <p>You can now:</p>
+                <ul>
+                    <li>Browse upcoming events</li>
+                    <li>Book tickets for your favorite events</li>
+                    <li>Manage your bookings</li>
+                </ul>
+                <p>Start exploring events now!</p>
+                <p>Best regards,<br>Event Booking Team</p>
+                """, name);
+
+        sendEmail(email, subject, content);
+    }
+
+    public void sendBookingConfirmationDirect(String toEmail, String bookingRef, String eventTitle,
+            String eventDate, String venueName, Integer quantity,
+            String totalAmount, String ticketNumbers) {
+        if (postmarkToken.isEmpty()) {
+            log.warn("Postmark token not configured, skipping email");
+            return;
+        }
+
+        String subject = "Booking Confirmed - " + eventTitle;
+        String content = String.format("""
+                <h2>Booking Confirmed!</h2>
+                <p><strong>Booking Reference:</strong> %s</p>
+                <p><strong>Event:</strong> %s</p>
+                <p><strong>Date:</strong> %s</p>
+                <p><strong>Venue:</strong> %s</p>
+                <p><strong>Tickets:</strong> %d</p>
+                <p><strong>Total:</strong> ₹%s</p>
+                <hr>
+                <h3>Your Tickets:</h3>
+                <p>%s</p>
+                """, bookingRef, eventTitle, eventDate, venueName, quantity, totalAmount, ticketNumbers);
+
+        sendEmail(toEmail, subject, content);
+    }
+
+    public void sendBookingCancellationDirect(String toEmail, String bookingRef,
+            String eventTitle, String totalAmount) {
+        if (postmarkToken.isEmpty()) {
+            log.warn("Postmark token not configured, skipping email");
+            return;
+        }
+
+        String subject = "Booking Cancelled - " + eventTitle;
+        String content = String.format(
+                "<h2>Booking Cancelled</h2><p>Your booking %s for %s has been cancelled.</p><p>Amount: ₹%s</p>",
+                bookingRef, eventTitle, totalAmount);
+
+        sendEmail(toEmail, subject, content);
     }
 }
